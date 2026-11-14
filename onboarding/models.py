@@ -11,6 +11,7 @@ def survey_deadline():
 
 
 class Employee(models.Model):
+    bitrix_task_id = models.PositiveBigIntegerField(null=True, unique=True, editable=False)
     name = models.CharField("Имя сотрудника", max_length=100)
     department = models.CharField("Подразделение", max_length=50)
     position = models.CharField("Должность", max_length=100)
