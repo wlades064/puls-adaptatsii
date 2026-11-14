@@ -2,10 +2,8 @@ import json
 from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError
-from django.db import OperationalError, transaction
 
-from onboarding.forms import EmployeeForm
-from onboarding.models import Employee, Survey
+from onboarding.bitrix_intake import employee_fields, import_hire
 
 MAX_SNAPSHOT_BYTES = 16 * 1024
 
@@ -39,28 +37,7 @@ class Command(BaseCommand):
             self.stdout.write(f"Задача №{task_id} пропущена: тип отличается от hire.")
             return
 
-        employee_data = task.get("employee")
-        if not isinstance(employee_data, dict) or any(
-            not isinstance(employee_data.get(field), str) for field in EmployeeForm.base_fields
-        ):
-            raise CommandError("Заполните строковые поля employee: имя, подразделение, должность и дату выхода.")
-        form = EmployeeForm(employee_data)
-        if not form.is_valid():
-            fields = ", ".join(form[field].label for field in form.errors)
-            raise CommandError(f"Проверьте поля сотрудника: {fields}.")
-
-        try:
-            with transaction.atomic():
-                employee, created = Employee.objects.get_or_create(
-                    bitrix_task_id=task_id, defaults=form.cleaned_data,
-                )
-                if created:
-                    Survey.objects.create(employee=employee)
-                elif any(getattr(employee, key) != value for key, value in form.cleaned_data.items()):
-                    raise CommandError(f"Задача №{task_id} уже обработана, но данные отличаются. Проверьте карточку вручную.")
-        except OperationalError as exc:
-            raise CommandError("Не удалось сохранить карточку и опрос. Повторите импорт.") from exc
-
+        employee, created = import_hire(task_id, employee_fields(task.get("employee")))
         if created:
             self.stdout.write(self.style.SUCCESS(f"Созданы карточка №{employee.pk} и опрос из задачи №{task_id}."))
         else:

@@ -1,0 +1,23 @@
+{
+  "kind": [
+    "UF_HIRE_KIND",
+    "ufHireKind"
+  ],
+  "name": [
+    "UF_HIRE_NAME",
+    "ufHireName"
+  ],
+  "department": [
+    "UF_HIRE_DEPARTMENT",
+    "ufHireDepartment"
+  ],
+  "position": [
+    "UF_HIRE_POSITION",
+    "ufHirePosition"
+  ],
+  "start_date": [
+    "UF_HIRE_START_DATE",
+    "ufHireStartDate"
+  ],
+  "hire_value": "hire"
+}
