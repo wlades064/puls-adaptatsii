@@ -1,0 +1,15 @@
+{% extends "onboarding/base.html" %}
+{% block title %}Вход · Пульс адаптации{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<section class="panel form-panel">
+  <h1>Вход в систему</h1>
+  <p class="muted">Для HR и ответственных за обращения.</p>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_div }}
+    {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+    <button class="button" type="submit">Войти</button>
+  </form>
+</section>
+{% endblock %}

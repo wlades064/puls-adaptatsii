@@ -1,0 +1,15 @@
+{% extends "onboarding/base.html" %}
+{% block title %}Новый сотрудник · Пульс адаптации{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<a class="back" href="{% url 'home' %}">← Панель HR</a>
+<section class="panel form-panel">
+  <h1>Новый сотрудник</h1>
+  <p class="muted">После сохранения появится ссылка на опрос.</p>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_div }}
+    <button class="button" type="submit">Создать карточку</button>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "onboarding/base.html" %}
+{% block content %}
+<div class="page-head">
+  <div><h1>{% if hr %}Панель HR{% else %}Мои поручения{% endif %}</h1>
+  <p class="muted">{% if hr %}Опросы сотрудников и работа с сигналами адаптации.{% else %}Обращения, которые вам передал HR.{% endif %}</p></div>
+  {% if hr %}<a class="button" href="{% url 'employee_new' %}"><span aria-hidden="true">＋</span> Добавить сотрудника</a>{% endif %}
+</div>
+<div class="stats">
+  {% for item in stats %}<a class="stat{% if status == item.code %} selected{% endif %}" href="{% if status == item.code %}{% url 'home' %}{% else %}?status={{ item.code }}{% endif %}" {% if status == item.code %}aria-current="page"{% endif %}>
+    <span class="stat-name"><span class="dot {{ item.code }}" aria-hidden="true"></span>{{ item.label }}</span>
+    <strong>{{ item.count }}</strong>
+  </a>{% endfor %}
+</div>
+<div class="dashboard{% if not hr %} solo{% endif %}">
+  <section class="panel">
+    <div class="panel-head"><h2>{% if hr %}Обращения{% else %}Поручения{% endif %}</h2>{% if status %}<a class="text-link" href="{% url 'home' %}">Все статусы</a>{% endif %}</div>
+    {% for issue in issues %}
+      <a class="list-row" href="{% url 'issue' issue.pk %}">
+        <div class="row-body">
+          <strong>{% if hr %}{{ issue.categories|join:", " }}{% else %}Поручение №{{ issue.pk }}{% endif %}</strong>
+          <span class="muted">{% if hr %}{{ issue.survey.employee.name }} · {{ issue.survey.employee.department }}{% else %}{{ issue.instruction|truncatechars:85 }}{% endif %}</span>
+        </div>
+        <span class="badge {{ issue.status }}">{{ issue.get_status_display }}</span><span class="arrow" aria-hidden="true">›</span>
+      </a>
+    {% empty %}<p class="empty">Здесь пока нет обращений.</p>{% endfor %}
+  </section>
+  {% if hr %}
+  <section class="panel staff">
+    <div class="panel-head"><h2>Сотрудники</h2><span class="muted">{{ employees|length }}</span></div>
+    {% for employee in employees %}
+      <a class="list-row" href="{% url 'employee' employee.pk %}">
+        <span class="avatar" aria-hidden="true">{{ employee.name|slice:":1" }}</span>
+        <div class="row-body"><strong>{{ employee.name }}</strong><span class="muted">{{ employee.department }} · {% if employee.survey.submitted_at %}ответ получен{% else %}ожидает ответа{% endif %}</span></div>
+        <span class="arrow" aria-hidden="true">›</span>
+      </a>
+    {% empty %}<p class="empty">Добавьте сотрудника, чтобы выдать ссылку на опрос.</p>{% endfor %}
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

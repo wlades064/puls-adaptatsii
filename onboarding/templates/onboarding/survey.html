@@ -1,0 +1,25 @@
+{% extends "onboarding/base.html" %}
+{% block title %}Опрос первой недели · Пульс адаптации{% endblock %}
+{% block main_class %}narrow survey{% endblock %}
+{% block content %}
+<h1>Как прошла первая неделя?</h1>
+<p class="muted">Ответы увидит HR. Если понадобится помощь, HR передаст ответственному только поручение.</p>
+<form class="panel form-panel" method="post">
+  {% csrf_token %}
+  {{ form.non_field_errors }}
+  {% for field in form %}
+    {% if field.use_fieldset %}
+      <fieldset class="survey-question">
+        <legend>{{ field.label }}</legend>
+        {{ field.errors }}
+        <div class="choices">{{ field }}</div>
+      </fieldset>
+    {% elif field.field.widget.input_type == "checkbox" %}
+      <div class="check">{{ field }} {{ field.label_tag }}{{ field.errors }}</div>
+    {% else %}
+      <div>{{ field.label_tag }}{{ field.errors }}{{ field }}</div>
+    {% endif %}
+  {% endfor %}
+  <button class="button" type="submit">Отправить ответы</button>
+</form>
+{% endblock %}

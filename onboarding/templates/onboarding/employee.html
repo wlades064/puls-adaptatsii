@@ -1,0 +1,36 @@
+{% extends "onboarding/base.html" %}
+{% block title %}{{ employee.name }} · Пульс адаптации{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<a class="back" href="{% url 'home' %}">← Панель HR</a>
+<div class="page-head"><div><h1>{{ employee.name }}</h1><p class="muted">{{ employee.department }} · {{ employee.position }} · выход {{ employee.start_date|date:"d.m.Y" }}</p></div></div>
+<section class="panel form-panel">
+  <h2>Опрос первой недели</h2>
+  {% if survey_url %}
+    <p class="muted">Передайте ссылку сотруднику. Действует до {{ survey.expires_at|date:"d.m.Y, H:i" }}.</p>
+    <label for="survey-link">Персональная ссылка</label>
+    <div class="input-row"><input id="survey-link" readonly value="{{ survey_url }}"><button class="button secondary" id="copy-link" type="button">Скопировать</button></div>
+    <p id="copy-status" role="status"></p>
+    <a class="text-link" href="{{ survey_url }}" target="_blank" rel="noopener noreferrer">Открыть опрос ↗</a>
+    <script>
+      const link = document.querySelector('#survey-link');
+      const status = document.querySelector('#copy-status');
+      document.querySelector('#copy-link').addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(link.value);
+          status.textContent = 'Ссылка скопирована.';
+        } catch {
+          link.select();
+          status.textContent = 'Ссылка выделена. Скопируйте её вручную.';
+        }
+      });
+    </script>
+  {% elif survey.submitted_at %}
+    <p class="muted">Ответ получен {{ survey.submitted_at|date:"d.m.Y, H:i" }}.</p>
+    {% include "onboarding/answers.html" %}
+    {% if survey.issue %}<a class="text-link" href="{% url 'issue' survey.issue.pk %}">Перейти к обращению ›</a>{% endif %}
+  {% else %}
+    <p class="muted">Срок действия ссылки истёк.</p>
+  {% endif %}
+</section>
+{% endblock %}

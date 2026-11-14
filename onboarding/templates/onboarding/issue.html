@@ -1,0 +1,55 @@
+{% extends "onboarding/base.html" %}
+{% block title %}Обращение №{{ issue.pk }} · Пульс адаптации{% endblock %}
+{% block content %}
+<a class="back" href="{% url 'home' %}">← {% if hr %}Панель HR{% else %}Мои поручения{% endif %}</a>
+<div class="page-head">
+  <div>
+    <h1>{% if hr %}Обращение{% else %}Поручение{% endif %} №{{ issue.pk }}</h1>
+    {% if hr %}<p class="muted">{{ issue.survey.employee.name }} · {{ issue.survey.employee.department }} · {{ issue.created_at|date:"d.m.Y, H:i" }}</p>{% endif %}
+  </div>
+  <span class="badge {{ issue.status }}">{{ issue.get_status_display }}</span>
+</div>
+<div class="dashboard{% if not hr %} solo{% endif %}">
+  <div class="stack">
+    {% if hr %}
+    <section class="panel form-panel">
+      <h2>Ответы сотрудника</h2>
+      <p class="signal">{{ issue.categories|join:", " }}</p>
+      {% if issue.survey.manager_involved %}<p class="muted">Обращение касается руководителя. Его может обработать HR.</p>{% endif %}
+      {% include "onboarding/answers.html" with survey=issue.survey %}
+    </section>
+    {% endif %}
+    {% if assign_form or close_form or issue.assignee or issue.result %}
+    <section class="panel form-panel">
+      <h2>{% if assign_form %}Назначить ответственного{% else %}Поручение{% endif %}</h2>
+      {% if issue.assignee and hr %}<p class="muted">{{ issue.assignee.get_full_name|default:issue.assignee.username }}</p>{% endif %}
+      {% if issue.instruction %}<p class="preserve-lines">{{ issue.instruction }}</p>{% endif %}
+      {% if assign_form %}
+        <form method="post">
+          {% csrf_token %}<input type="hidden" name="operation" value="assign">
+          {{ assign_form.as_div }}
+          <button class="button" type="submit">Назначить</button>
+        </form>
+      {% endif %}
+      {% if close_form %}
+        <form method="post">
+          {% csrf_token %}<input type="hidden" name="operation" value="close">
+          {{ close_form.as_div }}
+          <button class="button" type="submit">Закрыть обращение</button>
+        </form>
+      {% endif %}
+      {% if issue.result %}<h3>Результат</h3><p class="quote preserve-lines">{{ issue.result }}</p>{% endif %}
+    </section>
+    {% endif %}
+  </div>
+  {% if hr %}
+  <section class="panel form-panel history">
+    <h2>История</h2>
+    <ol>
+      <li><strong>Получен сигнал</strong><time>{{ issue.created_at|date:"d.m.Y, H:i" }}</time></li>
+      {% for event in issue.events.all %}<li><strong>{{ event.get_action_display }}</strong><time>{{ event.created_at|date:"d.m.Y, H:i" }} · {{ event.actor.get_full_name|default:event.actor.username }}</time><span>{{ event.detail }}</span></li>{% endfor %}
+    </ol>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

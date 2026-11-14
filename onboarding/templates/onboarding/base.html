@@ -1,0 +1,27 @@
+{% load static %}
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Пульс адаптации{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'onboarding/app.css' %}">
+</head>
+<body>
+  <header class="bar">
+    <div class="bar-inner">
+      <a class="brand" href="{% if public %}{% url 'login' %}{% else %}{% url 'home' %}{% endif %}">
+        <span class="mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+        Пульс адаптации
+      </a>
+      {% if request.user.is_authenticated and not public %}
+        <div class="account">
+          <span>{{ request.user.get_full_name|default:request.user.username }}</span>
+          <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="quiet" type="submit">Выйти</button></form>
+        </div>
+      {% endif %}
+    </div>
+  </header>
+  <main class="main {% block main_class %}{% endblock %}">{% block content %}{% endblock %}</main>
+</body>
+</html>
