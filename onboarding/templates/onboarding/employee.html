@@ -31,6 +31,10 @@
     {% if survey.issue %}<a class="text-link" href="{% url 'issue' survey.issue.pk %}">Перейти к обращению ›</a>{% endif %}
   {% else %}
     <p class="muted">Срок действия ссылки истёк.</p>
+    <form method="post">
+      {% csrf_token %}
+      <button class="button" type="submit">Перевыпустить ссылку</button>
+    </form>
   {% endif %}
 </section>
 {% endblock %}

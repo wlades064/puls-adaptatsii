@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from django.contrib.auth.decorators import login_required
 from django.core.signing import BadSignature, Signer
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -10,7 +12,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods
 
 from .forms import ANSWER_CHOICES, ASSIGNEE_GROUP, HR_GROUP, QUESTIONS, AssignForm, CloseForm, EmployeeForm, SurveyForm
-from .models import Employee, Issue, IssueEvent, Survey
+from .models import Employee, Issue, IssueEvent, Survey, survey_deadline
 
 
 def is_hr(user):
@@ -73,11 +75,20 @@ def employee_new(request):
 
 @login_required
 @never_cache
+@require_http_methods(["GET", "POST"])
 def employee_detail(request, pk):
     if not is_hr(request.user):
         raise PermissionDenied
     employee = get_object_or_404(Employee.objects.select_related("survey"), pk=pk)
     survey = employee.survey
+    if request.method == "POST":
+        try:
+            Survey.objects.filter(pk=survey.pk, submitted_at=None, expires_at__lte=timezone.now()).update(
+                key=uuid4(), expires_at=survey_deadline(),
+            )
+        except OperationalError:
+            return unavailable(request)
+        return redirect("employee", pk=pk)
     survey_url = ""
     if not survey.submitted_at and survey.expires_at > timezone.now():
         token = Signer(salt="pulse.survey").sign(str(survey.key))
@@ -120,7 +131,7 @@ def survey_response(request, token):
         categories = form.categories()
         try:
             with transaction.atomic():
-                updated = Survey.objects.filter(pk=survey.pk, submitted_at=None, expires_at__gt=now).update(
+                updated = Survey.objects.filter(pk=survey.pk, key=survey.key, submitted_at=None, expires_at__gt=now).update(
                     submitted_at=now, answers={key: data[key] for key in QUESTIONS},
                     comment=data["comment"], contact_hr=data["contact_hr"], manager_involved=data["manager_involved"],
                 )

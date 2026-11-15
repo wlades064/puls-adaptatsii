@@ -69,6 +69,32 @@ class WorkflowTests(TestCase):
         self.assertEqual(person.post(url, self.answers).status_code, 410)
         self.assertFalse(Issue.objects.exists())
 
+    def test_hr_can_renew_only_an_expired_unanswered_link(self):
+        from django.urls import reverse
+
+        from .models import Survey
+
+        old_url = self.create_survey()
+        survey = Survey.objects.get()
+        detail = reverse("employee", args=[survey.employee_id])
+        self.assertEqual(self.client.post(detail).status_code, 302)
+        survey.refresh_from_db()
+        self.assertEqual(Client().get(old_url).status_code, 200)
+        Survey.objects.update(expires_at=timezone.now() - timedelta(seconds=1))
+
+        worker = Client()
+        worker.force_login(self.assignee)
+        self.assertEqual(worker.post(detail).status_code, 403)
+        self.assertContains(self.client.get(detail), "Перевыпустить ссылку")
+        self.assertEqual(self.client.post(detail).status_code, 302)
+        new_url = urlsplit(self.client.get(detail).context["survey_url"]).path
+        self.assertNotEqual(old_url, new_url)
+        self.assertEqual(Client().post(old_url, self.answers).status_code, 404)
+        self.assertEqual(Client().post(new_url, self.answers).status_code, 302)
+        self.assertEqual(self.client.post(detail).status_code, 302)
+        self.assertContains(self.client.get(detail), "Личный комментарий")
+        self.assertEqual(Survey.objects.count(), 1)
+
     def test_failed_write_rolls_back_survey_without_success_confirmation(self):
         from .models import Issue, Survey
 
